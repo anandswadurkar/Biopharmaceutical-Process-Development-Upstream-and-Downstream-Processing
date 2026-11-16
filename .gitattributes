@@ -1,0 +1,17 @@
+# Keep LF in the working tree, not just in the repository.
+#
+# The notebooks are build output: tools/make_notebook.py writes them through nbformat,
+# which emits LF. If Git checked them out with CRLF, the next regeneration would rewrite
+# every line and the diff would show the whole file as changed, hiding the cells that
+# actually moved. The same applies to any generated text.
+* text=auto eol=lf
+
+# Notebooks are JSON: diff them as text, but do not let a merge tool try to resolve
+# them line by line. Regenerate instead (that is what the CI currency check enforces).
+*.ipynb text eol=lf merge=binary
+
+# Figures saved next to a report: SVG is text, PNG is not.
+*.svg text eol=lf
+*.png binary
+*.pdf binary
+*.xlsx binary

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bioproc"
+version = "0.1.0"
+description = "Upstream and downstream biopharmaceutical process development: mechanistic models, data-driven models and a notebook workbench"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Anand Wadurkar" }]
+requires-python = ">=3.11"
+# Installed from conda-forge via environment.yml; listed here for metadata only.
+# `pip install -e . --no-deps` so pip never pulls compiled wheels over conda builds.
+dependencies = ["numpy>=2,<2.4", "scipy", "pandas", "matplotlib", "scikit-learn", "SALib", "pooch", "openpyxl"]
+
+[project.optional-dependencies]
+# Optional external simulators. Install into a SEPARATE environment on Windows: a pip
+# build of a compiled dependency over a conda environment is how the silent crashes
+# start (ground rules section 9). See README "Optional simulators".
+chromatography = ["CADET-Process"]
+economics = ["biosteam"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests", "src"]
+addopts = "--doctest-modules -ra"
+markers = ["slow: integrates a full culture or a breakthrough curve (seconds)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "NPY"]
+# E501: long lines are allowed where they keep a table row or a citation on one line.
+ignore = ["E501"]

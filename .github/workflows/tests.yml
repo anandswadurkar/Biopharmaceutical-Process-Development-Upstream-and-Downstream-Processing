@@ -1,0 +1,79 @@
+name: tests
+
+# Locally the project uses the conda-forge environment in environment.yml. CI uses pip
+# wheels in a fresh virtual environment instead (no conda stack underneath, so the
+# "no pip on top of conda" rule does not apply here).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # numpy is capped to match environment.yml, so CI exercises what people install.
+          pip install "numpy<2.4" scipy pandas matplotlib scikit-learn SALib pooch openpyxl pytest hypothesis
+          pip install -e . --no-deps
+      - name: Run the suite (known answers, invariants, invalid inputs, conservation)
+        run: python -m pytest -q
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  notebooks-are-current:
+    # The notebooks are build output, committed *with* their executed outputs.
+    # Rebuilding them here without executing would differ only in outputs, so compare
+    # cell sources: a hand edit to a notebook (lost on the next regeneration) fails.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install nbformat
+      - name: Compare generator cells with committed notebooks
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+
+          import nbformat
+
+          sys.path.insert(0, "tools")
+          import make_notebook
+
+          stale = []
+          for system in make_notebook.SYSTEMS:
+              path = make_notebook.target_for(system)
+              if not path.is_file():
+                  stale.append(f"{path.name} (missing)")
+                  continue
+              expected = list(make_notebook.build_cells(system))
+              committed = nbformat.read(path, as_version=4)
+              actual = [(cell.cell_type, cell.source) for cell in committed.cells]
+              if expected != actual:
+                  stale.append(str(Path(path).relative_to(make_notebook.REPO)))
+          if stale:
+              print("::error::Notebooks differ from tools/make_notebook.py: " + ", ".join(stale))
+              print("Run 'python tools/make_notebook.py --execute' and commit the result.")
+              sys.exit(1)
+          print("Notebook cells match the generator.")
+          PY

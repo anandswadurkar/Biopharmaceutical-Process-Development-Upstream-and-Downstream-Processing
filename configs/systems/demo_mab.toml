@@ -1,0 +1,188 @@
+# Demo system: CHO fed-batch producing an IgG1 monoclonal antibody, with a
+# Protein A capture / CEX / AEX / viral-filtration / UF-DF purification train.
+#
+# All data generated from this config is SYNTHETIC: the notebook simulates it from the
+# kinetic parameters below. It is a positive control for the analysis, not evidence
+# about any real cell line or product.
+#
+# Every value under [answers] is the default the notebook offers when a question is
+# answered with Enter, or when it runs without a keyboard (CI, nbclient, pytest).
+
+[system]
+name = "Demo CHO fed-batch IgG1, 14-day process"
+product = "IgG1 monoclonal antibody"
+cell_line = "CHO (illustrative parameters, not a fitted line)"
+stage = "process development"
+context_of_use = """Compare feed strategies and capture loading for a 14-day CHO \
+fed-batch at 500 L, and screen which kinetic parameters the titer is most sensitive \
+to. Screening only: no claim about a real clone, and no GMP decision."""
+model_influence = "medium"
+decision_consequence = "low"
+seed = 20261115
+
+# ---------------------------------------------------------------------------------
+[upstream]
+duration_h = 336          # 14 days
+sample_interval_h = 24.0  # daily offline analytics, as in a development lab
+shift_time_h = 72.0       # temperature shift to 33 C on day 3
+
+[upstream.initial]
+xv = 0.4          # 1e6 cells/mL at inoculation
+xd = 0.02
+glc = 15.0        # mM: moderate at inoculation, so daily feeding engages from day 3
+gln = 4.0         # mM
+lac = 0.5
+amm = 0.5
+titer = 0.0       # mg/L
+volume = 500.0    # L
+
+[upstream.feed]
+glc_mM = 250.0               # concentrated feed
+gln_mM = 55.0
+target_glc_mM = 12.0         # setpoint for the feedback strategy
+bolus_fraction_of_volume = 0.035
+
+[upstream.kinetics]
+# Illustrative CHO-like values. Left at the model defaults except where noted; a real
+# study would fit these and report the fit with its uncertainty.
+mu_max_per_h = 0.045
+qp_beta_mg_per_1e9cells_h = 0.90
+ki_lac_mM = 80.0
+kd_amm_max_per_h = 0.020
+
+[upstream.sensitivity]
+# Ranges for the Sobol study: +/-30% around the nominal, which is wider than
+# batch-to-batch variation and narrower than a cell-line change.
+mu_max_per_h = [0.032, 0.058]
+qp_beta_mg_per_1e9cells_h = [0.63, 1.17]
+y_x_glc_1e9cells_per_mmol = [1.96, 3.64]
+ki_lac_mM = [56.0, 104.0]
+kd_amm_max_per_h = [0.014, 0.026]
+ks_glc_mM = [0.7, 1.3]
+
+# ---------------------------------------------------------------------------------
+[downstream]
+clarification_yield = 0.95   # depth filtration + sterile filtration
+
+[downstream.capture.column]
+diameter_cm = 45.0
+bed_height_cm = 20.0
+porosity_total = 0.85
+porosity_interstitial = 0.35
+
+[downstream.capture.resin]
+name = "Protein A (illustrative)"
+q_max_g_per_L_resin = 55.0        # static capacity
+k_eq_L_per_g = 8.0
+k_mass_transfer_per_min = 0.55    # lumped film + pore
+
+[downstream.capture.operation]
+velocity_cm_per_h = 300.0
+load_fraction_of_dbc = 0.80
+elution_recovery = 0.95
+hcp_log_reduction = 3.0
+dna_log_reduction = 3.5
+aggregate_removal_fraction = 0.30
+leached_protein_a_ng_per_mg = 8.0
+
+[downstream.polish_cex]
+yield_fraction = 0.90
+hcp_log_reduction = 1.5
+dna_log_reduction = 1.5
+aggregate_removal_fraction = 0.75
+protein_a_log_reduction = 1.5
+
+[downstream.polish_aex]
+yield_fraction = 0.95
+hcp_log_reduction = 1.8
+dna_log_reduction = 3.0
+aggregate_removal_fraction = 0.20
+protein_a_log_reduction = 1.0
+
+[downstream.viral_filtration]
+yield_fraction = 0.97
+
+[downstream.ufdf]
+target_concentration_g_per_L = 50.0
+diavolumes = 7.0
+yield_fraction = 0.95
+membrane_flux_LMH = 40.0
+area_m2 = 2.0
+
+# Feed stream entering capture, per gram of product. Typical post-harvest levels.
+[downstream.feed_impurities]
+hcp_ng_per_mg = 150000.0
+dna_pg_per_mg = 1000000.0
+aggregate_percent = 6.0
+leached_protein_a_ng_per_mg = 0.0
+
+# ---------------------------------------------------------------------------------
+# Release criteria. A batch that misses one is a process finding, reported as
+# OUT OF SPEC in the release table - never a code failure.
+[acceptance.titer_mg_per_L]
+unit = "mg/L"
+lower = 2000.0
+kind = "KPI"
+
+[acceptance.final_viability_percent]
+unit = "%"
+lower = 60.0
+kind = "PROCESS"
+
+[acceptance.overall_yield_percent]
+unit = "%"
+lower = 65.0
+kind = "KPI"
+
+[acceptance.hcp_ng_per_mg]
+unit = "ng/mg"
+upper = 100.0
+kind = "CQA"
+
+[acceptance.dna_pg_per_mg]
+unit = "pg/mg"
+upper = 10.0
+kind = "CQA"
+
+[acceptance.aggregate_percent]
+unit = "%"
+upper = 2.0
+kind = "CQA"
+
+[acceptance.leached_protein_a_ng_per_mg]
+unit = "ng/mg"
+upper = 10.0
+kind = "CQA"
+
+# ---------------------------------------------------------------------------------
+# Defaults for every question the notebook asks. Enter accepts these; a headless run
+# uses them without asking.
+[answers]
+data_source = "simulate"
+n_batches = 12
+scale_L = 500.0
+feed_strategy = "glucose_setpoint"
+target_glc_mM = 12.0
+duration_d = 14.0
+shift_day = 3.0
+lot_variation_cv = 0.08
+run_sensitivity = true
+sobol_base_samples = 64
+run_monte_carlo = true
+monte_carlo_samples = 120
+kpi_target = "titer_mg_per_L"
+batch_model = "pls"
+model_features = ["seed_density_1e6_per_mL", "peak_vcd_1e6_per_mL", "ivcd_1e6_cell_day_per_mL", "final_lactate_mM"]
+run_soft_sensor = true
+soft_sensor_target = "glucose_mM"
+soft_sensor_components = 5
+baseline_correct_spectra = true
+capture_velocity_cm_per_h = 300.0
+capture_bed_height_cm = 20.0
+load_fraction_of_dbc = 0.80
+breakthrough_fraction = 0.10
+run_convergence_study = true
+polishing_order = ["polish_cex", "polish_aex"]
+run_cost_estimate = true
+annual_production_kg = 50.0
+save_figures = true

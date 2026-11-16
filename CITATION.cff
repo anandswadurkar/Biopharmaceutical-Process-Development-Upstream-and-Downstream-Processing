@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "bioproc: a notebook workbench for biopharmaceutical process development"
+abstract: >-
+  An interactive notebook and Python package covering upstream fed-batch mammalian
+  cell culture (unstructured Monod-type kinetics with feedback feeding), downstream
+  purification (lumped kinetic model for Protein A capture, polishing, viral
+  filtration, UF/DF), and the data-driven layer on top: PLS/random-forest/Gaussian-
+  process models of batch KPIs, a Raman soft sensor, a serial hybrid model, global
+  Sobol sensitivity and Monte Carlo uncertainty. Every model score is reported next to
+  a no-information baseline on batch-grouped splits, and every run is verified against
+  analytic solutions and mass balances before results are shown.
+type: software
+authors:
+  - family-names: Wadurkar
+    given-names: Anand
+    affiliation: Syracuse University
+version: 0.1.0
+date-released: 2026-11-15
+license: MIT
+repository-code: "https://github.com/anandswadurkar/Biopharmaceutical-Process-Development-Upstream-and-Downstream-Processing"
+keywords:
+  - biopharmaceutical manufacturing
+  - fed-batch cell culture
+  - chromatography
+  - process analytical technology
+  - quality by design
+  - machine learning
+references:
+  - type: article
+    title: "Applications of Machine Learning in Biopharmaceutical Process Development and Manufacturing"
+    authors:
+      - family-names: Khuat
+        given-names: Thanh Tung
+      - family-names: Bassett
+        given-names: Robert
+      - family-names: Otte
+        given-names: Ellen
+      - family-names: Grevis-James
+        given-names: Alistair
+      - family-names: Gabrys
+        given-names: Bogdan
+    year: 2023
+    doi: 10.48550/arXiv.2310.09991

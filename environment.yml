@@ -1,0 +1,55 @@
+# Create with:
+#     conda env create -f environment.yml
+#     conda activate bioproc
+#     pip install -e . --no-deps
+#     python tools/install_kernel.py
+#
+# Everything comes from conda-forge. A pip build of a compiled package on top of a
+# conda environment is a reliable way to get crashes with no traceback on Windows. The
+# only pip step is the editable install of this repo's pure-Python package, with
+# --no-deps so pip cannot pull anything else.
+#
+# The external simulators (CADET-Process, BioSTEAM, IDAES, DWSIM) are optional and
+# deliberately not listed: the notebook has a built-in model for every step and only
+# offers a simulator when it imports. See README "Optional simulators".
+
+name: bioproc
+
+channels:
+  - conda-forge
+  # Keeps Anaconda's `defaults` channel out even when ~/.condarc lists it. A mixed
+  # conda-forge + defaults solve with the classic solver did not finish in 32 minutes
+  # on this machine.
+  - nodefaults
+
+dependencies:
+  # 3.11 matches the other projects in this workspace and gives tomllib for configs.
+  - python=3.11
+  # Below 2.4 keeps scipy/scikit-learn compiled extensions on an ABI they were built against.
+  - numpy<2.4
+  - scipy
+  - pandas
+  - matplotlib
+  # PLS, random forest, Gaussian process and grouped cross-validation for the
+  # data-driven and soft-sensor sections.
+  - scikit-learn
+  # Sobol sensitivity of the upstream model (ground rules section 3).
+  - salib
+  # Reads .xlsx exports such as the Gangadharan et al. (2021) open CHO dataset.
+  - openpyxl
+  # Cached, checksummed downloads of open datasets with provenance (section 4).
+  - pooch
+  # Dropdowns/sliders when the notebook runs interactively.
+  - ipywidgets
+  # ipykernel 7 changed the kernel protocol; VS Code's Jupyter extension is tested
+  # against 6.x, and with 7.x the kernel can die on connect.
+  - ipykernel=6.29.*
+  # nbformat writes the generated notebook; nbclient executes it headless.
+  - nbformat
+  - nbclient
+  - pip
+  # Development.
+  - pytest
+  - hypothesis
+  - ruff
+  - pre-commit

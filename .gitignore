@@ -1,0 +1,25 @@
+# Generated data lives in BIOPROC_DATA_DIR (default ~/bioproc-data), outside the repo.
+# These patterns are a backstop in case something is written here anyway.
+data/
+results/
+uploads/
+*.h5
+*.hdf5
+*.pkl
+answers.json
+run_record.json
+
+# Python
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+build/
+dist/
+
+# Editors / OS
+.vscode/
+.ipynb_checkpoints/
+Thumbs.db
+desktop.ini
