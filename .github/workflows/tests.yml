@@ -22,7 +22,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # numpy is capped to match environment.yml, so CI exercises what people install.
-          pip install "numpy<2.4" scipy pandas matplotlib scikit-learn SALib pooch openpyxl pytest hypothesis
+          # nbformat is a test dependency as well as a build one: the tests that check
+          # the notebook's kernel preflight and that every question has a config default
+          # import tools/make_notebook.py, which imports nbformat.
+          pip install "numpy<2.4" scipy pandas matplotlib scikit-learn SALib pooch openpyxl \
+                      nbformat pytest hypothesis
           pip install -e . --no-deps
       - name: Run the suite (known answers, invariants, invalid inputs, conservation)
         run: python -m pytest -q
